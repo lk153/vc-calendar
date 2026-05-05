@@ -1,11 +1,29 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { RouteProgress } from "@/components/RouteProgress";
+import { PWARegister } from "@/components/PWARegister";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Scheduler — Đặt phòng họp",
   description: "Hệ thống đặt phòng họp nội bộ",
+  applicationName: "Scheduler",
+  appleWebApp: {
+    capable: true,
+    title: "Scheduler",
+    statusBarStyle: "default",
+  },
+  formatDetection: { telephone: false },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#059669" },
+    { media: "(prefers-color-scheme: dark)", color: "#064e3b" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -27,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense fallback={null}>
           <RouteProgress />
         </Suspense>
+        <PWARegister />
         {children}
       </body>
     </html>
