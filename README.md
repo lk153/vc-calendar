@@ -27,7 +27,3 @@ Note: the `20260429000001_booking_no_overlap` migration adds the `btree_gist` ex
 - Location: DB exclusion constraint (hard).
 - Organizer: serial check, hard block.
 - Attendees: warn-and-allow override.
-
-## Seeded users
-- `admin` / `admin123!` — admin
-- `user` / `user123!` — regular user
