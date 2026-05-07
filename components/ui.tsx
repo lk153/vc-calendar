@@ -29,6 +29,18 @@ export function StatusPill({
   );
 }
 
+export function LiveBadge({ children = "Đang diễn ra" }: { children?: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-xs pl-xs pr-sm py-1 rounded-full bg-primary text-on-primary text-caption font-bold uppercase tracking-wider whitespace-nowrap shadow-[0_0_0_4px_rgba(5,150,105,0.18)]">
+      <span aria-hidden className="relative flex h-2 w-2 ml-xs">
+        <span className="absolute inline-flex h-full w-full rounded-full bg-on-primary opacity-80 animate-ping" />
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-on-primary" />
+      </span>
+      {children}
+    </span>
+  );
+}
+
 export function PrimaryButton({
   href,
   children,

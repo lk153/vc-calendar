@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/rbac";
 import { formatInTz } from "@/lib/tz";
 import { Icon } from "@/components/Icon";
 import { AgendaEmptyState } from "@/components/AgendaEmptyState";
-import { PrimaryButton, StatusPill } from "@/components/ui";
+import { PrimaryButton, StatusPill, LiveBadge } from "@/components/ui";
 import { startOfDay, endOfDay, addDays } from "date-fns";
 
 type AgendaBooking = {
@@ -44,7 +44,7 @@ export default async function CalendarPage() {
   const firstName = user.name?.trim().split(" ").slice(-1)[0] ?? "";
 
   return (
-    <main className="px-md md:px-lg pt-md pb-[calc(env(safe-area-inset-bottom)+96px)] md:pb-lg max-w-[1280px] w-full mx-auto">
+    <main className="px-md md:px-lg pt-md pb-[calc(env(safe-area-inset-bottom)+160px)] md:pb-lg max-w-[1280px] w-full mx-auto">
       <header className="mb-md">
         <div className="flex items-center justify-between gap-sm mb-xs">
           <h1 className="font-manrope font-bold text-headline-lg md:text-headline-xl text-on-surface leading-tight">
@@ -65,7 +65,7 @@ export default async function CalendarPage() {
         href="/bookings/new"
         aria-label="Đặt lịch mới"
         title="Đặt lịch mới"
-        className="md:hidden fixed z-40 right-md bottom-[calc(env(safe-area-inset-bottom)+16px)] w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-[0_8px_24px_rgba(5,150,105,0.35)] hover:shadow-[0_12px_28px_rgba(5,150,105,0.4)] active:scale-95 transition-all"
+        className="md:hidden fixed z-40 right-md bottom-[calc(env(safe-area-inset-bottom)+80px)] w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-[0_8px_24px_rgba(5,150,105,0.35)] hover:shadow-[0_12px_28px_rgba(5,150,105,0.4)] active:scale-95 transition-all"
       >
         <Icon name="add" className="text-[28px]" />
       </Link>
@@ -79,7 +79,7 @@ export default async function CalendarPage() {
             <Stat icon="event_upcoming" label="Ngày mai" count={tomorrow.length} />
             <Stat icon="date_range" label="Phần còn lại tuần" count={later.length} />
           </div>
-          <Section title="Hôm nay" bookings={today} tz={tz} now={now} emptyHint="Không có lịch họp hôm nay." />
+          <Section title="Hôm nay" bookings={today} tz={tz} now={now} swipe emptyHint="Không có lịch họp hôm nay." />
           <Section title="Ngày mai" bookings={tomorrow} tz={tz} now={now} emptyHint="Ngày mai chưa có lịch nào." />
           <Section title="Cuối tuần này" bookings={later} tz={tz} now={now} compact emptyHint="Không có lịch họp xa hơn trong tuần." />
         </>
@@ -113,6 +113,7 @@ function Section({
   tz,
   now,
   compact,
+  swipe,
   emptyHint,
 }: {
   title: string;
@@ -120,8 +121,10 @@ function Section({
   tz: string;
   now: Date;
   compact?: boolean;
+  swipe?: boolean;
   emptyHint: string;
 }) {
+  const carousel = !!swipe && bookings.length > 1;
   return (
     <section className="mb-md">
       <div className="flex items-center gap-sm mb-sm">
@@ -129,8 +132,14 @@ function Section({
           {title}
         </h3>
         <div className="flex-1 h-px bg-outline-variant" />
-        <span className="text-caption text-on-surface-variant uppercase tracking-wider font-semibold">
-          {bookings.length} lịch họp
+        <span className="text-caption text-on-surface-variant uppercase tracking-wider font-semibold flex items-center gap-xs">
+          {carousel && (
+            <span className="md:hidden inline-flex items-center gap-xs text-on-surface-variant normal-case font-medium tracking-normal">
+              <Icon name="swipe" className="text-[14px]" />
+              vuốt
+            </span>
+          )}
+          <span>{bookings.length} lịch họp</span>
         </span>
       </div>
       {bookings.length === 0 ? (
@@ -159,17 +168,24 @@ function Section({
           ))}
         </div>
       ) : (
-        <div className="space-y-sm">
+        <div
+          className={
+            carousel
+              ? "flex gap-sm overflow-x-auto snap-x snap-mandatory scroll-px-xs pb-xs md:overflow-visible md:flex-col md:gap-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              : "space-y-sm"
+          }
+        >
           {bookings.map((b) => {
             const live = now >= b.startsAt && now < b.endsAt;
             return (
               <Link
                 key={b.id}
                 href={`/bookings/${b.id}`}
-                className="group bg-surface border border-outline-variant rounded-xl p-md flex gap-md shadow-soft relative overflow-hidden hover:shadow-soft-lg hover:border-primary/40 transition-all"
+                className={`group rounded-xl p-md shadow-soft relative overflow-hidden transition-all flex flex-col gap-sm md:flex-row md:gap-md md:items-stretch ${live ? "bg-primary-container/40 border-2 border-primary ring-1 ring-primary/20 hover:bg-primary-container/55" : "bg-surface border border-outline-variant hover:shadow-soft-lg hover:border-primary/40"} ${carousel ? "snap-start shrink-0 w-[86%] sm:w-[62%] md:w-auto md:shrink" : ""}`}
               >
-                <div className={`absolute left-0 top-0 bottom-0 w-1 ${live ? "bg-primary" : "bg-primary/60"}`} />
-                <div className="flex flex-col items-start min-w-[60px] pl-xs">
+                <div className={`absolute left-0 top-0 bottom-0 ${live ? "w-1.5 bg-primary" : "w-1 bg-primary/60"}`} />
+
+                <div className="hidden md:flex md:flex-col md:items-start md:min-w-[60px] md:pl-xs">
                   <span className="font-manrope font-bold text-headline-md text-on-surface leading-none">
                     {formatInTz(b.startsAt, tz, "HH:mm")}
                   </span>
@@ -177,42 +193,65 @@ function Section({
                     {formatInTz(b.startsAt, tz, "dd MMM")}
                   </span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap justify-between items-start gap-xs mb-sm">
+
+                <div className="md:hidden flex items-center justify-between gap-xs pl-xs">
+                  <span className="font-manrope font-bold text-body-md text-on-surface tabular-nums whitespace-nowrap">
+                    {formatInTz(b.startsAt, tz, "HH:mm")} – {formatInTz(b.endsAt, tz, "HH:mm")}
+                  </span>
+                  <CompactStatus live={live} />
+                </div>
+
+                <div className="flex-1 min-w-0 pl-xs md:pl-0">
+                  <div className="hidden md:flex flex-wrap justify-between items-start gap-xs mb-sm">
                     <h4 className="font-inter font-semibold text-body-md text-on-surface min-w-0 break-words">
                       {b.title}
                     </h4>
                     {live ? (
-                      <StatusPill tone="primary" icon="sensors">Đang diễn ra</StatusPill>
+                      <LiveBadge />
                     ) : (
                       <StatusPill tone="primary" icon="check_circle">Đã xác nhận</StatusPill>
                     )}
                   </div>
+                  <h4 className="md:hidden font-manrope font-semibold text-body-lg text-on-surface line-clamp-2 mb-sm">
+                    {b.title}
+                  </h4>
                   <div className="flex flex-wrap items-center gap-x-md gap-y-xs text-on-surface-variant">
-                    <span className="inline-flex items-center gap-xs text-body-sm">
-                      <Icon name="meeting_room" className="text-[16px]" />
-                      {b.location.name}
+                    <span className="inline-flex items-center gap-xs text-body-sm min-w-0">
+                      <Icon name="meeting_room" className="text-[16px] shrink-0" />
+                      <span className="truncate">{b.location.name}</span>
                     </span>
-                    <span className="inline-flex items-center gap-xs text-body-sm">
+                    <span className="hidden md:inline-flex items-center gap-xs text-body-sm">
                       <Icon name="schedule" className="text-[16px]" />
                       {formatInTz(b.startsAt, tz, "HH:mm")} – {formatInTz(b.endsAt, tz, "HH:mm")}
                     </span>
-                    <span className="inline-flex items-center gap-xs px-sm py-xs rounded-full bg-surface-container text-on-surface-variant text-caption font-semibold">
-                      <Icon name="group" className="text-[14px]" />
+                    <span className="inline-flex items-center gap-xs text-body-sm">
+                      <Icon name="group" className="text-[16px]" />
                       {b.attendees.length + 1} người
                     </span>
                   </div>
                 </div>
-                <Icon
-                  name="chevron_right"
-                  className="text-outline self-center group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0"
-                />
+
+                <span className="hidden md:flex items-center self-center shrink-0">
+                  <Icon
+                    name="chevron_right"
+                    className="text-outline group-hover:text-primary group-hover:translate-x-0.5 transition-all"
+                  />
+                </span>
               </Link>
             );
           })}
         </div>
       )}
     </section>
+  );
+}
+
+function CompactStatus({ live }: { live: boolean }) {
+  if (live) return <LiveBadge />;
+  return (
+    <span className="inline-flex items-center px-sm py-0.5 rounded-full bg-primary-container text-on-primary-container text-caption font-bold uppercase tracking-wider whitespace-nowrap">
+      Đã xác nhận
+    </span>
   );
 }
 
